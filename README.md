@@ -27,6 +27,10 @@ signal_x, signal_y = prepare_xxx()
 trf_h, trf_score = TRF.estimate(signal_x, signal_y, order, 0.0001)
 for response_dim in range(trf_h.shape[2]):
     plt.plot(trf_h[:,:,response_dim].T, label=response_dim)
-    plt.label('scorei is {}'.format(trf_score[response_dim]))
+    plt.label('score is {}'.format(trf_score[response_dim]))
 plt.show()
 ```
+
+## others
+
+Preparing ...
