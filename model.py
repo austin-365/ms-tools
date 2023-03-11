@@ -1,3 +1,4 @@
+import re
 import json
 import logging
 import numpy as np
@@ -221,3 +222,94 @@ class TRF():
             cr_test[chh,:] = np.corrcoef(y_test[chh,:].T, y_pred[chh,:].T)[0][1]
 
         return h, cr_test.reshape(np.size(output_signal, 0))
+
+class Tool():
+    def __init__(self) -> None:
+        pass
+
+    ''' TextGrid Part '''
+    def parse_line(self, line, to_round=4):
+        line = line.strip()
+        if '"' in line:
+            key, value = re.findall(r'(.+?) = "(.*)"', line)[0]
+            return [ key, value ]
+        else:
+            key, value = re.findall(r'(.+?) = (.*)', line)[0]
+            return [ key, int(value) if 'size' in key else round(float(value), to_round) ]
+
+    @classmethod
+    def read_textgrid(cls, filepath):
+        '''
+        Read the tiers contained in the Praat-formatted TextGrid file.
+        Adapted form python package 'textgrid'.
+        '''
+        temp_data, textgrid_data = [], {}
+        with open(filepath, 'r') as source:
+            temp_data += [cls().parse_line(source.readline())]
+            temp_data += [cls().parse_line(source.readline())]
+            source.readline()
+            assert temp_data[0][1].startswith('ooTextFile') and temp_data[1][1]=='TextGrid'
+            temp_data += [cls().parse_line(source.readline())]
+            temp_data += [cls().parse_line(source.readline())]
+            source.readline()
+            temp_data += [cls().parse_line(source.readline())]
+            source.readline()
+            temp_data += [['tiers', {}]]
+            textgrid_data = {item[0]: item[1] for item in temp_data}
+
+            for _ in range(textgrid_data['size']):
+                temp_data, tier_data = [], {}
+                source.readline()
+                temp_data += [cls().parse_line(source.readline())]
+                temp_data += [cls().parse_line(source.readline())]
+                temp_data += [cls().parse_line(source.readline())]
+                temp_data += [cls().parse_line(source.readline())]
+                temp_data += [cls().parse_line(source.readline())]
+                tier_data = {item[0]: item[1] for item in temp_data}
+
+                for _ in range(tier_data['intervals: size']):
+                    temp_data = []
+                    source.readline()
+                    temp_data += [cls().parse_line(source.readline())]
+                    temp_data += [cls().parse_line(source.readline())]
+                    temp_data += [cls().parse_line(source.readline())]
+                    tier_data['intervals'] = tier_data.get('intervals', []) + [[item[1] for item in temp_data]]
+                textgrid_data['tiers'][tier_data['name']] = tier_data['intervals']
+        return textgrid_data
+
+    @classmethod
+    def write_textgrid(cls, textgrid_data, filepath):
+        """
+        Write the current state into a Praat-format TextGrid file.
+        Adapted form python package 'textgrid'.
+        format:
+            textgrid_data:
+                {
+                    'xmin': 0.0,
+                    'xmax': 3.78,
+                    'tiers': {
+                        'words': [[0.0, 0.16, ''], ...],
+                        'phones': [[0.0, 0.16, 'sil'], ...]
+                    }
+                }
+        """
+        with open(filepath, 'w') as target:
+            target.write('File type = "ooTextFile"\n')
+            target.write('Object class = "TextGrid"\n\n')
+            target.write('xmin = {}\n'.format(textgrid_data['xmin']))
+            target.write('xmax = {}\n'.format(textgrid_data['xmax']))
+            target.write('tiers? <exists>\n')
+            target.write('size = {}\n'.format(len(textgrid_data['tiers'])))
+            target.write('item []:\n')
+            for (i, name) in enumerate(textgrid_data['tiers'], 1):
+                target.write('\titem [{}]:\n'.format(i))
+                target.write('\t\tclass = "IntervalTier"\n')
+                target.write('\t\tname = "{}"\n'.format(name))
+                target.write('\t\txmin = {}\n'.format(textgrid_data['xmin']))
+                target.write('\t\txmax = {}\n'.format(textgrid_data['xmax']))
+                target.write('\t\tintervals: size = {}\n'.format(len(textgrid_data['tiers'][name])))
+                for (j, interval) in enumerate(textgrid_data['tiers'][name], 1):
+                    target.write('\t\t\tintervals [{}]:\n'.format(j))
+                    target.write('\t\t\t\txmin = {}\n'.format(interval[0]))
+                    target.write('\t\t\t\txmax = {}\n'.format(interval[1]))
+                    target.write('\t\t\t\ttext = "{}"\n'.format(interval[2]))

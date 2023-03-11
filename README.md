@@ -1,36 +1,49 @@
-# python script
+# MS-Tools
+
+This repository contains the code used in paper "Acoustic correlates of the syllabic rhythm of speech: Modulation spectrum or local features of the temporal envelope" (DOI: 10.1016/j.neubiorev.2023.105111).
+
+## Prepare
+
+1. Download the audio file and its transcription
+2. Convert audio file to .wav format with ffmpeg by setting -ac to 1, -ar to 16000
+3. Align and obtain the .TextGrid file with .wav & .txt file by [MFA](https://github.com/MontrealCorpusTools/Montreal-Forced-Aligner)
 
 ## Modulation spectrogram and spectrum
 
-```python
-from model import Model
-frame_len, time_const, shift = 5, 8, 0
-input_chunk = ...
-spectrogram, freq_scale = Model.compute_spectrogram(input_chunk, params=[frame_len, time_const, shift])
-plt.pcolor(np.arange(len(spectrogram))*frame_len/1000, freq_scale[:len(spectrogram[0)], 20*np.log10(spectrogram.T), shading='auto', cmap='gray_r')
-plt.show()
+The modulation spectrogram and spectrum can be calculated by the three function below in the `model-test.py` script.
 
-ms_output, freq = Model.compute_spectrum(spectrogram, params=['broad', 200, 'log'])
-ms_narrow = ms_output['narrow']
-plt.plot(freq, ms_narrow/max(ms_narrow))
-plt.show()
+```python
+# modulation spectrogram
+_ = test_spectrogram_generate()
+# broadband spectrum
+peak_freq = test_spectrum_generate(bandwidth='broad')
+# narrowband spectrum
+peak_freq = test_spectrum_generate(bandwidth='narrow')
+```
+
+## Rate of syllable
+
+Three kinds of rate of syllable can be calculated by the three function below in the `model-test.py` script.
+
+```python
+# syllable rate
+syll_rate = test_rate_of_syllable_generate(rate_type='sr')
+# articulation rate
+syll_rate = test_rate_of_syllable_generate(rate_type='ar')
+# syllable mode
+syll_rate = test_rate_of_syllable_generate(rate_type='mode')
+```
+
+## Correlation
+
+```python
+# correlation
+demo_of_modeling_relationship_between_syllable_rate_and_modulation_spectrum(data_path='./assets')
 ```
 
 ## Temporal responce function (TRF)
 
 ```python
-import json
-from model import TRF
-
-order = 200
-signal_x, signal_y = prepare_xxx()
-trf_h, trf_score = TRF.estimate(signal_x, signal_y, order, 0.0001)
-for response_dim in range(trf_h.shape[2]):
-    plt.plot(trf_h[:,:,response_dim].T, label=response_dim)
-    plt.label('score is {}'.format(trf_score[response_dim]))
-plt.show()
+# TRF
+demo_of_modeling_relationship_between_syllable_onset_and_broadband_envelope(data_path='./assets')
 ```
-
-## others
-
-Preparing ...
