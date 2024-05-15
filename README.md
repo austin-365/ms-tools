@@ -1,6 +1,6 @@
 # MS-Tools
 
-This repository contains the code used in paper "Acoustic correlates of the syllabic rhythm of speech: Modulation spectrum or local features of the temporal envelope" (DOI: 10.1016/j.neubiorev.2023.105111).
+This repository contains the code for analyzing the modulation spectrum.
 
 ## Prepare
 
